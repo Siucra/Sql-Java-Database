@@ -32,7 +32,7 @@ public class Application {
 		System.out.println("-".repeat(16));
 		System.out.println("Press 1 to Add data");
 		System.out.println("Press 2 to edit data");
-		System.out.println("Press 3 to delete data");
+		System.out.println("Press 3 to delete Table");
 		System.out.println("Press 4 to Add column to table");
 		System.out.println("Press 5 to create new table");
 		System.out.println("Press 6 to exit program");
@@ -41,6 +41,10 @@ public class Application {
 		int choice = input.nextInt();
 		input.nextLine();//consume leftover newline
 		switch(choice) {
+		case 3:{
+			deleteTable(con);
+			break;
+		}
 			case 5:{
 				createNewTable(con);
 				break;
@@ -50,6 +54,29 @@ public class Application {
 				break;
 			}
 		}
+	}
+	public void deleteTable(Connection con) {
+		System.out.println("Enter the table name you wish to drop: ");
+		String tableName = input.nextLine().trim();
+		
+		if(tableName.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted.");
+			return;
+		}
+		
+		String sql = "DROP TABLE IF EXISTS `" +tableName + "`";
+		
+		try(Statement statement = con.createStatement()){
+			statement.executeUpdate(sql);//Data Definition Language command to drop table
+			System.out.println("Table '"+tableName + "' dropped successfully.");
+		}
+		catch(SQLException e) {
+			System.out.println("SQL Error: "+e.getMessage());
+			e.printStackTrace();
+		}
+		
+		
+		
 	}
 	public void createNewTable(Connection con) {
 	
@@ -124,9 +151,9 @@ public class Application {
 			if(input.nextLine().trim().equalsIgnoreCase("yes")) {
 				if(!primaryKeyColumn.isEmpty()) {
 					System.out.println("A primary Key has already been assigned. Only one primary key is allowed.");
+					continue;//exits this loop
 				}
 				else {
-					//primaryKeyColumn +=", ";
 					primaryKeyColumn = columnName;//Assign only once
 				}
 				
@@ -158,7 +185,7 @@ public class Application {
 		Statement statement = null;
 		
 		try {
-			statement = con.createStatement(); //creates a statment object to send to database
+			statement = con.createStatement(); //creates a statement object to send to database
 			statement.execute(sql); //execute sql command
 			System.out.println("Executed SQL command successfully.");//confirmation message
 		}
