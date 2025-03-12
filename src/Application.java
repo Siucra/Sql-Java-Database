@@ -123,10 +123,15 @@ public class Application {
 			//append PRIMARY KEY if user chose yes
 			if(input.nextLine().trim().equalsIgnoreCase("yes")) {
 				if(!primaryKeyColumn.isEmpty()) {
-					primaryKeyColumn +=", ";
+					System.out.println("A primary Key has already been assigned. Only one primary key is allowed.");
 				}
-				primaryKeyColumn += columnName;
+				else {
+					//primaryKeyColumn +=", ";
+					primaryKeyColumn = columnName;//Assign only once
+				}
+				
 				//sql.append(" PRIMARY KEY");
+				
 			}
 			
 			
@@ -137,7 +142,7 @@ public class Application {
 			
 		}
 		if(!primaryKeyColumn.isEmpty()) {
-			sql.append(", PRIMARY KEY("+primaryKeyColumn +")");
+			sql.append(", PRIMARY KEY(").append(primaryKeyColumn).append(")");
 		}	
 		
 		//end of table syntax
