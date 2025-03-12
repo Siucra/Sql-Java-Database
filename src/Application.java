@@ -3,7 +3,7 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.Scanner;
-
+import java.sql.ResultSet;
 
 
 public class Application {
@@ -64,16 +64,49 @@ public class Application {
 			return;
 		}
 		
+		//check if table exists before dropping
+		String checkTableSql = "SHOW TABLES LIKE '" + tableName + "'";
+		
+		 try (Statement checkStatement = con.createStatement();
+		         ResultSet resultSet = checkStatement.executeQuery(checkTableSql)) {
+			 	
+			 	   //moves the cursor to the first row of the result set
+		        if (!resultSet.next()) { // If no rows are returned, table doesnt exist
+		            System.out.println("Error: Table '" + tableName + "' does not exist. Operation aborted.");
+		            deleteTable(con);
+		            return;
+		        }
+		 }
+		 catch(SQLException e) {
+			 System.out.println("SQL ERROR while checking for table's existence: "+e.getMessage());
+			 return;
+		 }
 		String sql = "DROP TABLE IF EXISTS `" +tableName + "`";
 		
-		try(Statement statement = con.createStatement()){
-			statement.executeUpdate(sql);//Data Definition Language command to drop table
-			System.out.println("Table '"+tableName + "' dropped successfully.");
+		System.out.println("Are you sure you want to drop table: "+tableName + "?");
+		System.out.println("YES/NO");
+		String userConfirmation = input.next();
+		
+		if(userConfirmation.trim().equalsIgnoreCase("yes")) {
+			
+			try(Statement statement = con.createStatement()){
+				System.out.println("Executing: " + sql);//debugging, remove later
+				statement.executeUpdate(sql);//Data Definition Language command to drop table
+				System.out.println("Table '"+tableName + "' dropped successfully.");
+			}
+			catch(SQLException e) {
+				System.out.println("SQL Error: "+e.getMessage());
+				e.printStackTrace();
+			}
 		}
-		catch(SQLException e) {
-			System.out.println("SQL Error: "+e.getMessage());
-			e.printStackTrace();
+		else if(userConfirmation.trim().equalsIgnoreCase("no")) {
+			System.out.println("Drop Operation Aborted. Returning to main menu....");
+			mainMenu(con);//call main menu and keep the connection
 		}
+		else {
+			System.out.println("Invalid input. Please enter YES or NO.");
+		}
+
 		
 		
 		
