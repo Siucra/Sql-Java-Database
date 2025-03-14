@@ -12,7 +12,8 @@ public class Application {
 	public static void main(String[] args) {
 		try {
 			Connection con = DatabaseUtils.getConnection();//Create connection
-			//operations to execute for database here 
+			//ConnectionManager conManager = new ConnectionManager();
+			
 			
 			if(con != null) {
 				System.out.println("Connected to the Database successfully");
@@ -27,34 +28,61 @@ public class Application {
 		}
 
 	}
+	
+	public boolean closeConnection() {
+		System.out.println("Would you like to close the connection? (YES/NO)");
+		switch(input.nextLine().toLowerCase()) {
+			case"yes":{
+				System.out.println("Connection closed");
+				return true;
+			}
+			case"no":{
+				return false;
+			}
+			default:{
+				System.out.println("Invalid choice. Closing connection by default...");
+			}
+		}
+		
+		return false;
+		
+	}
 	public void mainMenu(Connection con) {
 		//while true
 		System.out.println("-".repeat(16));
-		System.out.println("Press 1 to Add data");
-		System.out.println("Press 2 to edit data");
-		System.out.println("Press 3 to delete Table");
-		System.out.println("Press 4 to Add column to table");
-		System.out.println("Press 5 to create new table");
-		System.out.println("Press 6 to exit program");
+		System.out.println("Press 1 to create new table");
+		System.out.println("Press 2 to delete a table");
+		System.out.println("Press 3 to add column to table");
+		System.out.println("Press 4 to add table data");
+		System.out.println("Press 5 to edit table data");
+		System.out.println("Press 6 to delete table data");
+		System.out.println("Press 7 to close connection");
 		System.out.println("-".repeat(16));
 		
 		int choice = input.nextInt();
 		input.nextLine();//consume leftover newline
 		switch(choice) {
-		case 3:{
+		case 1:{
+			createNewTable(con);
+			break;
+		}
+		case 2:{
 			deleteTable(con);
 			break;
 		}
-			case 5:{
-				createNewTable(con);
-				break;
-			}
+		case 3:{
+			addTableColumn(con);
+			break;
+		}
+
 			default:{
 				System.out.println("Invalid choice. Please enter a valid number.");
 				break;
 			}
 		}
 	}
+
+
 	public void deleteTable(Connection con) {
 		System.out.println("Enter the table name you wish to drop: ");
 		String tableName = input.nextLine().trim();
@@ -82,7 +110,6 @@ public class Application {
 			 return;
 		 }
 		String sql = "DROP TABLE IF EXISTS `" +tableName + "`";
-		
 		System.out.println("Are you sure you want to drop table: "+tableName + "?");
 		System.out.println("YES/NO");
 		String userConfirmation = input.next();
@@ -112,6 +139,7 @@ public class Application {
 		
 	}
 	public void createNewTable(Connection con) {
+		
 	
 		System.out.println("Enter the name of the table: ");
 		String tableName = input.nextLine().trim();
@@ -213,6 +241,79 @@ public class Application {
 		executeSql(con, sql.toString());
 		
 	}
+	
+	private boolean tableExists(Connection con, String tableName) {
+		String checkTableSql = "SHOW TABLES LIKE ' "+ tableName +"'";
+		
+		return false;
+	}
+	
+	private boolean primaryKeyExists(Connection con, String tableName) {
+		
+		return false;
+	}
+	
+	public void addTableColumn(Connection con) {
+		System.out.println("Enter the table name you wish to add a column to: ");
+		String tableNameFind = input.nextLine().trim();
+		
+		
+		
+		if(tableNameFind.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted.");
+			return;
+		}
+		
+		//check if table exists and if a primary key already exists
+		if(!tableExists(con, tableNameFind) || primaryKeyExists(con, tableNameFind)) {
+			
+			return;//exit if table does not exist or if primary key already exist
+		}
+		
+		 //!!//
+			System.out.println("How many columns would you like to add to table "+tableNameFind+" ?");
+			if(!input.hasNextInt()) {
+				System.out.println("Invalid number of columns. Please enter an integer.");
+				input.nextLine(); //clear invalid input
+				return;
+			}
+			
+			int columnAmount = input.nextInt();
+			input.nextLine();//
+			
+			//used to construct and use multiple strings at once
+			StringBuilder sql = new StringBuilder("ALTER TABLE `"+ tableNameFind +  "` ");
+			boolean firstColumn = true;
+			
+			
+			for(int i =0; i<columnAmount; i++) {
+				if(!firstColumn) {
+					sql.append(", ");
+				}
+				System.out.println("Enter column name: ");
+				String columnName = "`" + input.nextLine().trim()+"`";
+				
+				System.out.println("Enter data type for " + columnName + ": ");
+				String dataType = input.nextLine();				
+						
+				//append used to connect strings in StringBuilder
+				sql.append("ADD" + columnName + " " +dataType);
+				
+				System.out.println("Can this column be NULL? (yes/no)");
+
+				//append NOT NULL if the column cannot be null
+				if(input.nextLine().trim().equalsIgnoreCase("no")) {
+					sql.append(" NOT NULL");
+				}
+				
+				firstColumn = false;
+			
+			System.out.println("FINAL SQL: "+sql.toString());//DEBUGGING
+			
+			executeSql(con, sql.toString());
+		}
+	}
+	
 	
 	public void executeSql(Connection con, String sql) {
 		Statement statement = null;
