@@ -79,6 +79,10 @@ public class Application {
 			deleteTableColumn(con);
 			break;
 		}
+		case 8:{
+			closeConnection();
+			break;
+		}
 
 		default:{
 			System.out.println("Invalid choice. Please enter a valid number.");
@@ -345,7 +349,6 @@ public void addTableColumn(Connection con) {
         return;
     }
 
-    while (true) {
         if (!tableExists(con, tableNameFind)) {
             System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
             return;//!!
@@ -355,8 +358,9 @@ public void addTableColumn(Connection con) {
         if (!input.hasNextInt()) {
             System.out.println("Invalid number of columns. Please enter an integer.");
             input.nextLine(); // Clear invalid input
-            continue;
+            return;
         }
+    
 
         int columnAmount = input.nextInt();
         input.nextLine(); // Consume the newline character
@@ -375,6 +379,19 @@ public void addTableColumn(Connection con) {
 
             System.out.println("Enter data type for " + columnName + ": ");
             String dataType = input.nextLine();
+            
+            if(dataType.equalsIgnoreCase("String")) {//if the user types String
+				while(true) {//loop until a valid input for length is entered
+					System.out.println("Enter maximum length of the String (1-255)");
+					int length = input.nextInt();
+					input.nextLine(); //consume newline
+					if(length>=1 && length<=255) {
+						dataType = "VARCHAR("+length+")";
+						break; //exits loop if length is valid
+					}
+					System.out.println("Invalid length. Please enter a value between 1-255");
+				}		
+            }
 
             sql.append("ADD " + columnName + " " + dataType);
 
@@ -401,7 +418,7 @@ public void addTableColumn(Connection con) {
         executeSql(con, sql.toString());
         break;
         }
-     }
+     
 }
 
 	
