@@ -312,9 +312,8 @@ public class Application {
 	}
 	
 	private boolean primaryKeyExists(Connection con, String tableName) {
-		try(ResultSet rs = con.getMetaData().getTables(null, null, tableName, null)) {
-			System.out.println("A primary key already exists for this table.");
-				return rs.next(); //primary key exists
+		try(ResultSet rs = con.getMetaData().getPrimaryKeys(null, null, tableName)) {
+			return rs.next(); //primary key exists
 		}
 		catch(SQLException e) {
 			System.out.println("Error on locating Primary key" + e.getMessage());
@@ -352,11 +351,6 @@ public void addTableColumn(Connection con) {
             return;//!!
         }
 
-        if (primaryKeyExists(con, tableNameFind)) {
-            System.out.println("A primary key already exists for this table. Choose another option or modify another table.");
-            return; //!!
-        }
-
         System.out.println("How many columns would you like to add to table " + tableNameFind + " ?");
         if (!input.hasNextInt()) {
             System.out.println("Invalid number of columns. Please enter an integer.");
@@ -369,31 +363,45 @@ public void addTableColumn(Connection con) {
 
         StringBuilder sql = new StringBuilder("ALTER TABLE `" + tableNameFind + "` ");
         boolean firstColumn = true;
+        boolean primaryKeyAdded = primaryKeyExists(con, tableNameFind);
 
         for (int i = 0; i < columnAmount; i++) {
             if (!firstColumn) {
                 sql.append(", ");
             }
-            System.out.println("Enter column name: ");
-            String columnName = "`" + input.nextLine().trim() + "`";
+            
+          System.out.println("Enter column name: ");
+          String columnName = "`" + input.nextLine().trim() + "`";
 
             System.out.println("Enter data type for " + columnName + ": ");
             String dataType = input.nextLine();
 
             sql.append("ADD " + columnName + " " + dataType);
 
-            System.out.println("Can this column be NULL? (yes/no)");
+            System.out.println("Can this column be NULL? (YES/NO)");
             if (input.nextLine().trim().equalsIgnoreCase("no")) {
                 sql.append(" NOT NULL");
+            
+            
+            System.out.println("Is this column a primary key? (YES/NO) ");
+            if(input.nextLine().trim().equalsIgnoreCase("yes")) {
+            	if(primaryKeyAdded) {
+            		System.out.println("A primary Key already exists for this table. Cannot add another primary key.");
+            		continue; //skips column
+            	}
+            	else {
+            		sql.append(" PRIMARY KEY");
+            		primaryKeyAdded = true;//update boolean
+            	}
             }
-
             firstColumn = false;
         }
 
         System.out.println("FINAL SQL: " + sql.toString()); // For debugging
         executeSql(con, sql.toString());
         break;
-    }
+        }
+     }
 }
 
 	
