@@ -165,21 +165,34 @@ public class Application {
 			return;
 		}
 		
-		if(isColumnHasPrimaryKey(con, tableNameFind, columnFromTable)) {
+		if(ColumnHasPrimaryKey(con, tableNameFind, columnFromTable)) {
 			System.out.println("Cannot drop '"+columnFromTable+"' because it is a Primary Key");
 			return;
 		}
 		
 		String sql = "ALTER TABLE "+ tableNameFind + " DROP COLUMN "+columnFromTable;
-		try(Statement statement = con.createStatement()){
-			statement.executeUpdate(sql);
-			System.out.println("Column '"+columnFromTable+"' has been dropped successfully from '"+tableNameFind+"'");
+		System.out.println("Are you sure you want to drop column '"+columnFromTable+"' from Table '"+tableNameFind+"' ?");
+		System.out.println("YES/NO");
+		String userConfirmation = input.next();
+		
+		if(userConfirmation.trim().equalsIgnoreCase("yes")) {
+		
+			try(Statement statement = con.createStatement()){
+				statement.executeUpdate(sql);
+				System.out.println("Column '"+columnFromTable+"' has been dropped successfully from '"+tableNameFind+"'");
+			}
+			catch(SQLException e) {
+				System.out.println("Unable to drop column: "+e.getMessage());
+			}
 		}
-		catch(SQLException e) {
-			System.out.println("Unable to drop column: "+e.getMessage());
+		else if(userConfirmation.trim().equalsIgnoreCase("no")){
+		System.out.println("Drop Operation for '"+columnFromTable+"' Aborted. Returning to main menu...");
+		mainMenu(con);
 		}
 		
-		
+		else {
+			System.out.println("Invalid input. Please enter YES or NO.");
+		}
 		
 	}
 	public void createNewTable(Connection con) {
@@ -310,7 +323,7 @@ public class Application {
 		
 	}
 	
-	private boolean isColumnHasPrimaryKey(Connection con, String tableName, String columnName) {
+	private boolean ColumnHasPrimaryKey(Connection con, String tableName, String columnName) {
 		try(ResultSet rs = con.getMetaData().getPrimaryKeys(null, null, tableName)){
 			while(rs.next()) {
 				if(rs.getString("COLUMN_NAME").equals(columnName)) {
