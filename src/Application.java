@@ -41,53 +41,57 @@ public class Application {
 			}
 			default:{
 				System.out.println("Invalid choice. Closing connection by default...");
+				return true;
 			}
 		}
-		
-		return false;
-		
 	}
 	public void mainMenu(Connection con) {
-		//while true
-		System.out.println("-".repeat(16));
-		System.out.println("Press 1 to create new table");
-		System.out.println("Press 2 to delete a table");
-		System.out.println("Press 3 to add column to table");
-		System.out.println("Press 4 to delete a column from a table");
-		System.out.println("Press 5 to add table data");
-		System.out.println("Press 6 to edit table data");
-		System.out.println("Press 7 to delete table data");
-		System.out.println("Press 8 to close connection");
-		System.out.println("-".repeat(16));
+		boolean keepRunning = true;//control variable
 		
-		int choice = input.nextInt();
-		input.nextLine();//consume leftover newline
-		switch(choice) {
-		case 1:{
-			createNewTable(con);
-			break;
-		}
-		case 2:{
-			deleteTable(con);
-			break;
-		}
-		case 3:{
-			addTableColumn(con);
-			break;
-		}
-		case 4:{
-			deleteTableColumn(con);
-			break;
-		}
-		case 8:{
-			closeConnection();
-			break;
-		}
-
-		default:{
-			System.out.println("Invalid choice. Please enter a valid number.");
-			break;
-		}
+		while(keepRunning) {//while keepRunning is true, loop mainMenu
+			System.out.println("-".repeat(16));
+			System.out.println("Press 1 to create new table");
+			System.out.println("Press 2 to delete a table");
+			System.out.println("Press 3 to add column to table");
+			System.out.println("Press 4 to delete a column from a table");
+			System.out.println("Press 5 to add table data");
+			System.out.println("Press 6 to edit table data");
+			System.out.println("Press 7 to delete table data");
+			System.out.println("Press 8 to close connection");
+			System.out.println("-".repeat(16));
+			
+			int choice = input.nextInt();
+			input.nextLine();//consume leftover newline
+			switch(choice) {
+				case 1:{
+					createNewTable(con);
+					break;
+				}
+				case 2:{
+					deleteTable(con);
+					break;
+				}
+				case 3:{
+					addTableColumn(con);
+					break;
+				}
+				case 4:{
+					deleteTableColumn(con);
+					break;
+				}
+				case 8:{
+					if(closeConnection()) {
+					//returns true
+					keepRunning = false;
+					}
+					break;
+				}
+		
+				default:{
+					System.out.println("Invalid choice. Please enter a valid number.");
+					break;
+				}
+			}
 		}
 	}
 
