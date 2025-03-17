@@ -53,10 +53,11 @@ public class Application {
 		System.out.println("Press 1 to create new table");
 		System.out.println("Press 2 to delete a table");
 		System.out.println("Press 3 to add column to table");
-		System.out.println("Press 4 to add table data");
-		System.out.println("Press 5 to edit table data");
-		System.out.println("Press 6 to delete table data");
-		System.out.println("Press 7 to close connection");
+		System.out.println("Press 4 to delete a column from a table");
+		System.out.println("Press 5 to add table data");
+		System.out.println("Press 6 to edit table data");
+		System.out.println("Press 7 to delete table data");
+		System.out.println("Press 8 to close connection");
 		System.out.println("-".repeat(16));
 		
 		int choice = input.nextInt();
@@ -74,13 +75,18 @@ public class Application {
 			addTableColumn(con);
 			break;
 		}
+		case 4:{
+			deleteTableColumn(con);
+			break;
+		}
 
-			default:{
-				System.out.println("Invalid choice. Please enter a valid number.");
-				break;
-			}
+		default:{
+			System.out.println("Invalid choice. Please enter a valid number.");
+			break;
+		}
 		}
 	}
+
 
 
 	public void deleteTable(Connection con) {
@@ -133,7 +139,45 @@ public class Application {
 		else {
 			System.out.println("Invalid input. Please enter YES or NO.");
 		}
+		
+	}
+	
 
+	public void deleteTableColumn(Connection con) {
+		System.out.println("Enter the table name: ");
+		String tableNameFind = input.nextLine().trim();
+		
+		if(tableNameFind.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted.");
+			return;
+		}
+		
+		if(!tableExists(con, tableNameFind)) {
+			System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
+			return;
+		}
+		
+		System.out.println("Enter the column name you wish to drop from table '"+tableNameFind+"'");
+		String columnFromTable = input.nextLine().trim();
+			
+		if(columnFromTable.isEmpty()) {
+			System.out.println("Unable to find this column in table '"+tableNameFind+ "'");
+			return;
+		}
+		
+		if(isColumnHasPrimaryKey(con, tableNameFind, columnFromTable)) {
+			System.out.println("Cannot drop '"+columnFromTable+"' because it is a Primary Key");
+			return;
+		}
+		
+		String sql = "ALTER TABLE "+ tableNameFind + " DROP COLUMN "+columnFromTable;
+		try(Statement statement = con.createStatement()){
+			statement.executeUpdate(sql);
+			System.out.println("Column '"+columnFromTable+"' has been dropped successfully from '"+tableNameFind+"'");
+		}
+		catch(SQLException e) {
+			System.out.println("Unable to drop column: "+e.getMessage());
+		}
 		
 		
 		
@@ -243,76 +287,102 @@ public class Application {
 	}
 	
 	private boolean tableExists(Connection con, String tableName) {
-		String checkTableSql = "SHOW TABLES LIKE ' "+ tableName +"'";
 		
-		return false;
+		try(ResultSet rs = con.getMetaData().getTables(null, null, tableName, null)){
+			return rs.next();
+		}
+		catch(SQLException e) {
+			System.out.println("SQL Error while checking for table's existence" + e.getMessage());
+			return false;
+		}
+		
 	}
 	
 	private boolean primaryKeyExists(Connection con, String tableName) {
+		try(ResultSet rs = con.getMetaData().getTables(null, null, tableName, null)) {
+			System.out.println("A primary key already exists for this table.");
+				return rs.next(); //primary key exists
+		}
+		catch(SQLException e) {
+			System.out.println("Error on locating Primary key" + e.getMessage());
+			return false;
+		}
 		
+	}
+	
+	private boolean isColumnHasPrimaryKey(Connection con, String tableName, String columnName) {
+		try(ResultSet rs = con.getMetaData().getPrimaryKeys(null, null, tableName)){
+			while(rs.next()) {
+				if(rs.getString("COLUMN_NAME").equals(columnName)) {
+					return true;
+				}
+			}
+		}
+		catch(SQLException e) {
+			System.out.println("SQL Error: "+e.getMessage());
+		}
 		return false;
 	}
 	
-	public void addTableColumn(Connection con) {
-		System.out.println("Enter the table name you wish to add a column to: ");
-		String tableNameFind = input.nextLine().trim();
-		
-		
-		
-		if(tableNameFind.isEmpty()) {
-			System.out.println("Unable to find this table. Operation aborted.");
-			return;
-		}
-		
-		//check if table exists and if a primary key already exists
-		if(!tableExists(con, tableNameFind) || primaryKeyExists(con, tableNameFind)) {
-			
-			return;//exit if table does not exist or if primary key already exist
-		}
-		
-		 //!!//
-			System.out.println("How many columns would you like to add to table "+tableNameFind+" ?");
-			if(!input.hasNextInt()) {
-				System.out.println("Invalid number of columns. Please enter an integer.");
-				input.nextLine(); //clear invalid input
-				return;
-			}
-			
-			int columnAmount = input.nextInt();
-			input.nextLine();//
-			
-			//used to construct and use multiple strings at once
-			StringBuilder sql = new StringBuilder("ALTER TABLE `"+ tableNameFind +  "` ");
-			boolean firstColumn = true;
-			
-			
-			for(int i =0; i<columnAmount; i++) {
-				if(!firstColumn) {
-					sql.append(", ");
-				}
-				System.out.println("Enter column name: ");
-				String columnName = "`" + input.nextLine().trim()+"`";
-				
-				System.out.println("Enter data type for " + columnName + ": ");
-				String dataType = input.nextLine();				
-						
-				//append used to connect strings in StringBuilder
-				sql.append("ADD" + columnName + " " +dataType);
-				
-				System.out.println("Can this column be NULL? (yes/no)");
+public void addTableColumn(Connection con) {
+    System.out.println("Enter the table name you wish to add a column to: ");
+    String tableNameFind = input.nextLine().trim();
 
-				//append NOT NULL if the column cannot be null
-				if(input.nextLine().trim().equalsIgnoreCase("no")) {
-					sql.append(" NOT NULL");
-				}
-				
-				firstColumn = false;
-			
-			System.out.println("FINAL SQL: "+sql.toString());//DEBUGGING
-			
-			executeSql(con, sql.toString());
-		}
-	}
+    if (tableNameFind.isEmpty()) {
+        System.out.println("Unable to find this table. Operation aborted.");
+        return;
+    }
+
+    while (true) {
+        if (!tableExists(con, tableNameFind)) {
+            System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
+            return;//!!
+        }
+
+        if (primaryKeyExists(con, tableNameFind)) {
+            System.out.println("A primary key already exists for this table. Choose another option or modify another table.");
+            return; //!!
+        }
+
+        System.out.println("How many columns would you like to add to table " + tableNameFind + " ?");
+        if (!input.hasNextInt()) {
+            System.out.println("Invalid number of columns. Please enter an integer.");
+            input.nextLine(); // Clear invalid input
+            continue;
+        }
+
+        int columnAmount = input.nextInt();
+        input.nextLine(); // Consume the newline character
+
+        StringBuilder sql = new StringBuilder("ALTER TABLE `" + tableNameFind + "` ");
+        boolean firstColumn = true;
+
+        for (int i = 0; i < columnAmount; i++) {
+            if (!firstColumn) {
+                sql.append(", ");
+            }
+            System.out.println("Enter column name: ");
+            String columnName = "`" + input.nextLine().trim() + "`";
+
+            System.out.println("Enter data type for " + columnName + ": ");
+            String dataType = input.nextLine();
+
+            sql.append("ADD " + columnName + " " + dataType);
+
+            System.out.println("Can this column be NULL? (yes/no)");
+            if (input.nextLine().trim().equalsIgnoreCase("no")) {
+                sql.append(" NOT NULL");
+            }
+
+            firstColumn = false;
+        }
+
+        System.out.println("FINAL SQL: " + sql.toString()); // For debugging
+        executeSql(con, sql.toString());
+        break;
+    }
+}
+
 	
 	
 	public void executeSql(Connection con, String sql) {
