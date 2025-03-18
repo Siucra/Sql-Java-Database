@@ -52,9 +52,10 @@ public class Application {
 			System.out.println("-".repeat(16));
 			System.out.println("Press 1 to create new table");
 			System.out.println("Press 2 to delete a table");
-			System.out.println("Press 3 to add column to table");
+			System.out.println("Press 3 to add column to a table");
 			System.out.println("Press 4 to delete a column from a table");
-			System.out.println("Press 5 to add table data");
+			System.out.println("Press 5 to edit column from a table");
+			//System.out.println("Press 5 to add table data");
 			System.out.println("Press 6 to edit table data");
 			System.out.println("Press 7 to delete table data");
 			System.out.println("Press 8 to close connection");
@@ -79,6 +80,10 @@ public class Application {
 					deleteTableColumn(con);
 					break;
 				}
+				case 5:{
+					editTableColumn(con);
+					break;
+				}
 				case 8:{
 					if(closeConnection()) {
 					//returns true
@@ -96,6 +101,66 @@ public class Application {
 	}
 
 
+
+	public void editTableColumn(Connection con) {
+		//search for table, search for column, edit type/name 
+		System.out.println("Enter the table name: ");
+		String tableNameFind = input.nextLine().trim();
+		
+		if(tableNameFind.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted");
+			return;
+		}
+		
+		if(!tableExists(con, tableNameFind)) {
+			System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
+			return;
+		}
+		System.out.println("Enter the column name you wish to edit from table '"+tableNameFind+"'");
+		String columnFromTable = input.nextLine().trim();
+		
+		if(columnFromTable.isEmpty()) {
+			System.out.println("Unable to find this column in table '"+tableNameFind+ "'");
+			return;
+		}
+		
+		System.out.println("Would you like to rename '"+columnFromTable+"' or edit datatype?");
+		System.out.println("1 - RENAME");
+		System.out.println("2 - EDIT DATATYPE");
+		System.out.println("3- EXIT");
+		
+		switch(input.nextInt()){
+			case 1:{
+				System.out.println("Enter a new name for: "+columnFromTable);
+				String newColumnName = input.next();
+				System.out.println("Are you sure you want to change column name '"+columnFromTable +"' to '"+newColumnName+"' ?");
+				System.out.println("(YES/NO)");
+				String userConfirmation = input.next();
+				
+				if(userConfirmation.trim().equalsIgnoreCase("yes")) {
+					String sql = "ALTER TABLE "+tableNameFind +" RENAME COLUMN "+columnFromTable+" TO "+newColumnName;
+					try(Statement statement = con.createStatement()) {
+						statement.executeUpdate(sql);
+						System.out.println("Column '"+columnFromTable+"' successfully renamed to: '"+newColumnName+"' in Table '"+tableNameFind+"'.");
+						
+					}
+					catch(SQLException e) {
+						System.out.println("Unable to edit column name:"+e.getMessage());
+					}
+				}
+				else if(userConfirmation.trim().equalsIgnoreCase("no")) {
+					System.out.println("Rename Operation for '"+columnFromTable+"' Aborted. Returning to main menu...");
+					mainMenu(con);
+				}
+				else {
+					System.out.println("Invalid input. Please enter YES or NO.");
+				}
+				break;
+			}
+		}
+		
+		
+	}
 
 	public void deleteTable(Connection con) {
 		System.out.println("Enter the table name you wish to drop: ");
