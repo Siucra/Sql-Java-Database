@@ -1,4 +1,5 @@
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.SQLException;
@@ -55,10 +56,10 @@ public class Application {
 			System.out.println("Press 3 to add column to a table");
 			System.out.println("Press 4 to delete a column from a table");
 			System.out.println("Press 5 to edit column from a table");
-			//System.out.println("Press 5 to add table data");
-			System.out.println("Press 6 to edit table data");
-			System.out.println("Press 7 to delete table data");
-			System.out.println("Press 8 to close connection");
+			System.out.println("Press 6 to add table data");
+			System.out.println("Press 7 to edit table data");
+			System.out.println("Press 8 to delete table data");
+			System.out.println("Press 9 to close connection");
 			System.out.println("-".repeat(16));
 			
 			int choice = input.nextInt();
@@ -84,7 +85,11 @@ public class Application {
 					editTableColumn(con);
 					break;
 				}
-				case 8:{
+				case 6:{
+					insertTableData(con);
+					break;
+				}
+				case 9:{
 					if(closeConnection()) {
 					//returns true
 					keepRunning = false;
@@ -99,12 +104,60 @@ public class Application {
 			}
 		}
 	}
+	
+	public static String getColumnDataType(Connection con, String tableNameFind,String columnFromTable ) {
+		String dataType = null;
+		
+		try {
+			DatabaseMetaData metaData = con.getMetaData();
+			ResultSet resultSet = metaData.getColumns(null,  null, tableNameFind, columnFromTable);
+			if(resultSet.next()) {
+				dataType = resultSet.getString("TYPE_NAME");
+			}
+		}
+		catch(SQLException e) {
+			System.out.println("Error retrieving column data type: "+e.getMessage());
+		}
+		return dataType;
+	}
 
 
+	public void insertTableData(Connection con) {
+		// search for table, search for column, check if there isnt existing data, INSERT
+		System.out.println("Enter table name: ");
+		String tableNameFind = input.nextLine().trim();
+		
+		//checks if input is empty
+		if(tableNameFind.isEmpty()) {
+			System.out.println("Unable to find this table. Operating aborted.");
+			return;
+		}
+		//checks if table is in the database
+		if(!tableExists(con, tableNameFind)) {
+			System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
+			return;
+		}
+		
+		System.out.println("Enter the column name you wish to add data to Table '"+tableNameFind+"'");
+		
+	
+		
+		String columnFromTable = input.nextLine().trim();
+		
+		String columnType = Application.getColumnDataType(con, tableNameFind, columnFromTable);
+		System.out.println("The data type of this column is: "+columnType);
+		
+		if(columnFromTable.isEmpty()) {
+			System.out.println("Unable to find this column in table '"+tableNameFind+"'");
+			return;
+		}
+		
+		//String columnType = getColumnDataType(con, tableNameFind, columnFromTable);
+	}
 
 	public void editTableColumn(Connection con) {
 		//search for table, search for column, edit type/name 
-		System.out.println("Enter the table name: ");
+		System.out.println("Enter table name: ");
 		String tableNameFind = input.nextLine().trim();
 		
 		if(tableNameFind.isEmpty()) {
@@ -127,7 +180,7 @@ public class Application {
 		System.out.println("Would you like to rename '"+columnFromTable+"' or edit datatype?");
 		System.out.println("1 - RENAME");
 		System.out.println("2 - EDIT DATATYPE");
-		System.out.println("3- EXIT");
+		System.out.println("3 - EXIT");
 		
 		switch(input.nextInt()){
 			case 1:{
@@ -158,9 +211,10 @@ public class Application {
 				break;
 			}
 			case 2:{
-				//String currentDataType = null;
-				//String query = "SELE"
-				System.out.println("Enter the new datatype for the column '"+columnFromTable+ "':");
+				System.out.println("Enter the new datatype for the column '"+columnFromTable+ "' (INT/STRING):");
+				String columnType = Application.getColumnDataType(con, tableNameFind, columnFromTable);
+				System.out.println("The data type of this column is: "+columnType);
+				
 				String newDataType = input.next().trim();
 				
 				if(newDataType.equalsIgnoreCase("String")) {//if the user types String
@@ -173,9 +227,7 @@ public class Application {
 							break; //exits loop if length is valid
 						}
 						System.out.println("Invalid length. Please enter a value between 1-255");
-					}
-					
-						
+					}	
 				}
 				System.out.println("Are you sure you want to change the datatype of '"+ columnFromTable+"' to '"+newDataType+"' ?");
 				System.out.println("(YES/NO)");
@@ -190,8 +242,6 @@ public class Application {
 						System.out.println("Unable to edit column data type: "+e.getMessage());
 					}
 					
-					
-					
 				}
 				break;
 			}
@@ -201,8 +251,6 @@ public class Application {
 				break;
 			}
 		}
-		
-		
 	}
 
 	public void deleteTable(Connection con) {
