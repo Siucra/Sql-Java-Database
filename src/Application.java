@@ -157,6 +157,49 @@ public class Application {
 				}
 				break;
 			}
+			case 2:{
+				//String currentDataType = null;
+				//String query = "SELE"
+				System.out.println("Enter the new datatype for the column '"+columnFromTable+ "':");
+				String newDataType = input.next().trim();
+				
+				if(newDataType.equalsIgnoreCase("String")) {//if the user types String
+					while(true) {//loop until a valid input for length is entered
+						System.out.println("Enter maximum length of the String (1-255)");
+						int length = input.nextInt();
+						input.nextLine(); //consume newline
+						if(length>=1 && length<=255) {
+							newDataType = "VARCHAR("+length+")";
+							break; //exits loop if length is valid
+						}
+						System.out.println("Invalid length. Please enter a value between 1-255");
+					}
+					
+						
+				}
+				System.out.println("Are you sure you want to change the datatype of '"+ columnFromTable+"' to '"+newDataType+"' ?");
+				System.out.println("(YES/NO)");
+				String userConfirmation = input.next().trim();
+				if(userConfirmation.equalsIgnoreCase("yes")) {
+			        String sqlChangeDataType = "ALTER TABLE " + tableNameFind + " MODIFY COLUMN " + columnFromTable + " " + newDataType;
+					try(Statement statement = con.createStatement()){
+						statement.executeUpdate(sqlChangeDataType);
+						System.out.println("Datatype successfully changed to "+newDataType+".");//!!
+					}
+					catch(SQLException e) {
+						System.out.println("Unable to edit column data type: "+e.getMessage());
+					}
+					
+					
+					
+				}
+				break;
+			}
+			case 3:{
+				System.out.println("Returning to main menu....");
+				mainMenu(con);
+				break;
+			}
 		}
 		
 		
