@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.Scanner;
@@ -114,6 +115,9 @@ public class Application {
 			if(resultSet.next()) {
 				dataType = resultSet.getString("TYPE_NAME");
 			}
+			else {
+				System.out.println("No data found for column '"+columnFromTable +"' in table '"+tableNameFind +"'.");
+			}
 		}
 		catch(SQLException e) {
 			System.out.println("Error retrieving column data type: "+e.getMessage());
@@ -130,6 +134,9 @@ public class Application {
 			if(resultSet.next()) {
 				length = resultSet.getInt("COLUMN_SIZE");
 			}
+			else {
+				System.out.println("No data found for column '" + columnFromTable + "' in table '" + tableNameFind+"'.");
+			}
 		}
 		catch(SQLException e) {
 			System.out.println("Error retrieving column max length: "+e.getMessage());
@@ -140,6 +147,7 @@ public class Application {
 	
 	public void insertTableData(Connection con) {
 		// search for table, search for column, check if there isnt existing data, INSERT
+		
 		System.out.println("Enter table name: ");
 		String tableNameFind = input.nextLine().trim();
 		
@@ -155,24 +163,43 @@ public class Application {
 		}
 		
 		System.out.println("Enter the column name you wish to add data to Table '"+tableNameFind+"'");
-		
-	
-		
 		String columnFromTable = input.nextLine().trim();
-		
-		String columnType = Application.getColumnDataType(con, tableNameFind, columnFromTable);
-		System.out.println("The data type of this column is: "+columnType);
 		
 		if(columnFromTable.isEmpty()) {
 			System.out.println("Unable to find this column in table '"+tableNameFind+"'");
 			return;
 		}
-		System.out.println("Enter info for field: ");
+		
+		String columnType = Application.getColumnDataType(con, tableNameFind, columnFromTable);
+	
+		System.out.println("The data type of this column is: "+columnType);
+		int maxLength = getColumnMaxLength(con, tableNameFind, columnFromTable);
+		
+		System.out.println("Enter info for field (max length "+maxLength+ "): ");
 		String fieldInfo = input.nextLine();
-		if(columnType.equalsIgnoreCase("VARCHAR")) {
-			if()
+		
+		if(fieldInfo.length()>maxLength) {
+			System.out.println("The data exceeds the maximum length of "+ maxLength + " characters. Please enter valid data.");
+			return;
 		}
-		String sql = "INSERT INTO "+tableNameFind + " "+columnType +" VALUES "+ fieldInfo;
+
+		String sql = "INSERT INTO " + tableNameFind + " (" + columnFromTable + ") VALUES (?)";
+		try(PreparedStatement pStatement = con.prepareStatement(sql)){
+			pStatement.setString(1, fieldInfo);
+			//rowsAffected used for execution feedback
+			int rowsAffected = pStatement.executeUpdate();
+			if(rowsAffected > 0) {
+				System.out.println("Data successfully added to "+ tableNameFind);
+				}
+			else {
+				System.out.println("No data added.");
+			}
+		}
+		catch(SQLException e) {
+			System.out.println("SQL Error: "+e.getMessage());
+		}
+		
+		
 		/*
 		 * 
 		 *if(userConfirmation.trim().equalsIgnoreCase("yes")) {
@@ -549,7 +576,52 @@ public class Application {
             System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
             return;//!!
         }
+        
+        System.out.println("Enter the column name you wish to add: ");
+        String columnName = input.nextLine().trim();
+        columnName = "`"+columnName+"`";
+        
+        System.out.println("Enter datatype for new column (VARCHAR/INT");
+        String dataType = input.nextLine().trim();
+        
+        if(dataType.equalsIgnoreCase("VARCHAR")) {//if the user types String
+			while(true) {//loop until a valid input for length is entered
+				System.out.println("Enter maximum length for the VARCHAR (1-255)");
+				int length = input.nextInt();
+				input.nextLine(); //consume newline
+				if(length>=1 && length<=255) {
+					dataType = "VARCHAR(" + length + ")";
+					break; //exits loop if length is valid
+				}
+				System.out.println("Invalid length. Please enter a value between 1-255");
+			}		
+        }
+        System.out.println("Is this column a primary key? (YES/NO)");
+        boolean isPrimaryKey = input.nextLine().trim().equalsIgnoreCase("yes");
+        
+        //Auto sets NOT NULL if column is a primary key
+        String nullSetting = isPrimaryKey ? " NOT NULL": ""; //!!!!!!!!!!
+        
+        //otherwise:
+        if(!isPrimaryKey) {
+        	System.out.println("Can this column be NULL ? (YES/NO)");
+        	boolean nullable = input.nextLine().trim().equalsIgnoreCase("yes");
+        	nullSetting = nullable ? "": " NOT NULL";
+        }
+        
+        StringBuilder sql = new StringBuilder("ALTER TABLE "+ tableNameFind +" ADD COLUMN " + columnName + " "+ dataType + nullSetting);
 
+        if(isPrimaryKey) {
+        	//checks if primary key already exists in table
+        	if(primaryKeyExists(con, tableNameFind)) {
+        		System.out.println("A primary key already exists for this table.");
+        		return;
+        	}
+        	else {
+        		sql.append(", ADD PRIMARY KEY (" + columnName + ")");
+        	}
+        }
+        /*
         System.out.println("How many columns would you like to add to table " + tableNameFind + " ?");
         if (!input.hasNextInt()) {
             System.out.println("Invalid number of columns. Please enter an integer.");
@@ -576,24 +648,11 @@ public class Application {
             System.out.println("Enter data type for " + columnName + ": ");
             String dataType = input.nextLine();
             
-            if(dataType.equalsIgnoreCase("String")) {//if the user types String
-				while(true) {//loop until a valid input for length is entered
-					System.out.println("Enter maximum length of the String (1-255)");
-					int length = input.nextInt();
-					input.nextLine(); //consume newline
-					if(length>=1 && length<=255) {
-						dataType = "VARCHAR("+length+")";
-						break; //exits loop if length is valid
-					}
-					System.out.println("Invalid length. Please enter a value between 1-255");
-				}		
-            }
 
             sql.append("ADD " + columnName + " " + dataType);
 
             System.out.println("Can this column be NULL? (YES/NO)");
-            if (input.nextLine().trim().equalsIgnoreCase("no")) {
-                sql.append(" NOT NULL");
+            input.nextLine().trim().equalsIgnoreCase("no");
             
             
             System.out.println("Is this column a primary key? (YES/NO) ");
@@ -603,19 +662,20 @@ public class Application {
             		continue; //skips column
             	}
             	else {
-            		sql.append(" PRIMARY KEY");
-            		primaryKeyAdded = true;//update boolean
+            		sql.append(", ADD PRIMARY KEY");
+            	//	primaryKeyAdded = true;//update boolean
             	}
             }
-            firstColumn = false;
+           // firstColumn = false;
         }
+        */
 
         System.out.println("FINAL SQL: " + sql.toString()); // For debugging
         executeSql(con, sql.toString());
-        break;
+        System.out.println("Column added successfully.");
         }
      
-}
+
 
 	
 	
