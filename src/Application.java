@@ -121,7 +121,23 @@ public class Application {
 		return dataType;
 	}
 
-
+	public int getColumnMaxLength(Connection con, String tableNameFind, String columnFromTable) {
+		int length = 0;
+		
+		try {
+			DatabaseMetaData metaData = con.getMetaData();
+			ResultSet resultSet = metaData.getColumns(null, null, tableNameFind, columnFromTable);
+			if(resultSet.next()) {
+				length = resultSet.getInt("COLUMN_SIZE");
+			}
+		}
+		catch(SQLException e) {
+			System.out.println("Error retrieving column max length: "+e.getMessage());
+		}
+		
+		return length;
+	}
+	
 	public void insertTableData(Connection con) {
 		// search for table, search for column, check if there isnt existing data, INSERT
 		System.out.println("Enter table name: ");
@@ -151,8 +167,28 @@ public class Application {
 			System.out.println("Unable to find this column in table '"+tableNameFind+"'");
 			return;
 		}
-		
-		//String columnType = getColumnDataType(con, tableNameFind, columnFromTable);
+		System.out.println("Enter info for field: ");
+		String fieldInfo = input.nextLine();
+		if(columnType.equalsIgnoreCase("VARCHAR")) {
+			if()
+		}
+		String sql = "INSERT INTO "+tableNameFind + " "+columnType +" VALUES "+ fieldInfo;
+		/*
+		 * 
+		 *if(userConfirmation.trim().equalsIgnoreCase("yes")) {
+					String sql = "ALTER TABLE "+tableNameFind +" RENAME COLUMN "+columnFromTable+" TO "+newColumnName;
+					try(Statement statement = con.createStatement()) {
+						statement.executeUpdate(sql);
+						System.out.println("Column '"+columnFromTable+"' successfully renamed to: '"+newColumnName+"' in Table '"+tableNameFind+"'.");
+						
+					}
+					catch(SQLException e) {
+						System.out.println("Unable to edit column name:"+e.getMessage());
+					}
+				}
+		 *
+		 */
+
 	}
 
 	public void editTableColumn(Connection con) {
@@ -500,7 +536,7 @@ public class Application {
 		return false;
 	}
 	
-public void addTableColumn(Connection con) {
+	public void addTableColumn(Connection con) {
     System.out.println("Enter the table name you wish to add a column to: ");
     String tableNameFind = input.nextLine().trim();
 
