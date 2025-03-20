@@ -435,7 +435,7 @@ public class Application {
 			System.out.println("Invalid input. Please try again.");
 			return;
 		}
-		
+		/*
 		System.out.println("How many columns would you like to add to table "+tableName+" ?");
 		if(!input.hasNextInt()) {
 			System.out.println("Invalid number of columns. Please enter an integer.");
@@ -519,10 +519,13 @@ public class Application {
 		
 		//end of table syntax
 		sql.append(");");
-		
+		*/
+		//creates a table with only an ID column initially
+		String sql = "CREATE TABLE "+ tableName + "(id INT AUTO_INCREMENT PRIMARY KEY)";
 		System.out.println("FINAL SQL: "+sql.toString());//DEBUGGING
 		
-		executeSql(con, sql.toString());
+		executeSql(con, sql);
+		System.out.println("Table "+ tableName + " created successfully. Please add columns into it.");
 		
 	}
 	
@@ -572,14 +575,13 @@ public class Application {
         return;
     }
 
-        if (!tableExists(con, tableNameFind)) {
-            System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
-            return;//!!
-        }
+    if (!tableExists(con, tableNameFind)) {
+         System.out.println("Error: Table '" + tableNameFind + "' does not exist. Please try again.");
+         return;//!!
+    }
         
         System.out.println("Enter the column name you wish to add: ");
-        String columnName = input.nextLine().trim();
-        columnName = "`"+columnName+"`";
+        String columnName = "`" + input.nextLine().trim() + "`";
         
         System.out.println("Enter datatype for new column (VARCHAR/INT");
         String dataType = input.nextLine().trim();
@@ -596,31 +598,20 @@ public class Application {
 				System.out.println("Invalid length. Please enter a value between 1-255");
 			}		
         }
-        System.out.println("Is this column a primary key? (YES/NO)");
-        boolean isPrimaryKey = input.nextLine().trim().equalsIgnoreCase("yes");
-        
-        //Auto sets NOT NULL if column is a primary key
-        String nullSetting = isPrimaryKey ? " NOT NULL": ""; //!!!!!!!!!!
-        
-        //otherwise:
-        if(!isPrimaryKey) {
+ 
         	System.out.println("Can this column be NULL ? (YES/NO)");
-        	boolean nullable = input.nextLine().trim().equalsIgnoreCase("yes");
-        	nullSetting = nullable ? "": " NOT NULL";
-        }
+        	boolean isNullable = input.nextLine().trim().equalsIgnoreCase("yes");
+        	String nullSetting = isNullable ? "": " NOT NULL";
         
         StringBuilder sql = new StringBuilder("ALTER TABLE "+ tableNameFind +" ADD COLUMN " + columnName + " "+ dataType + nullSetting);
-
-        if(isPrimaryKey) {
-        	//checks if primary key already exists in table
-        	if(primaryKeyExists(con, tableNameFind)) {
-        		System.out.println("A primary key already exists for this table.");
-        		return;
-        	}
-        	else {
-        		sql.append(", ADD PRIMARY KEY (" + columnName + ")");
-        	}
+        
+        System.out.println("Should this column be UNIQUE? (YES/NO)");
+        boolean isUnique = input.nextLine().trim().equalsIgnoreCase("yes");
+        
+        if(isUnique) {
+        	sql.append(", ADD UNIQUE (" + columnName + ")");
         }
+
         /*
         System.out.println("How many columns would you like to add to table " + tableNameFind + " ?");
         if (!input.hasNextInt()) {
