@@ -8,4 +8,4 @@ To set up, follow these simple steps:
    - USER: the username you created when installing mySQL workbench (default is root)
    - PASSWORD: the password you created when installing mySQL workbench (if you didnt set a password ignore this step)
 
-4)Enjoy this simple program!
+4) Enjoy this simple program!
