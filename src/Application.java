@@ -145,9 +145,9 @@ public class Application {
 			return;
 		}
 		
-		//if(!columnExists(con, tableName, conditionColumn)) {
-			//
-		//}
+		if(!columnExists(con, tableName, conditionColumn)) {
+			System.out.println("Column '" + conditionColumn + "' does not exist in table '" + tableName +"'.");
+		}
 		
 		System.out.println("Enter the existing value of that column to find the row (condition value)");
 		System.out.println("e.g '3' for id, 'bob' for name");
@@ -174,7 +174,7 @@ public class Application {
 	    }
 	}
 
-	public static String getColumnDataType(Connection con, String tableNameFind,String columnFromTable ) {
+	public String getColumnDataType(Connection con, String tableNameFind,String columnFromTable ) {
 		String dataType = null;
 		
 		try {
@@ -193,6 +193,20 @@ public class Application {
 		return dataType;
 	}
 
+	public boolean columnExists(Connection con, String tableName, String columnName) {
+		try {
+			DatabaseMetaData meta = con.getMetaData();
+			ResultSet rs = meta.getColumns(null, null, tableName, columnName);
+			return rs.next();
+		}
+		catch(SQLException e) {
+			System.out.println("Error checking column: "+e.getMessage());
+			return false;
+		}
+		
+
+	}
+	
 	public int getColumnMaxLength(Connection con, String tableNameFind, String columnFromTable) {
 		int length = 0;
 		
