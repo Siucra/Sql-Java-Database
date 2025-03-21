@@ -94,6 +94,10 @@ public class Application {
 					editTableData(con);
 					break;
 				}
+				case 8:{
+					deleteTableData(con);
+					break;
+				}
 				case 9:{
 					if(closeConnection()) {
 					//returns true
@@ -110,6 +114,71 @@ public class Application {
 		}
 	}
 	
+	private void deleteTableData(Connection con) {
+		System.out.println("Enter the table name: ");
+		String tableName = input.nextLine().trim();
+		
+		if(tableName.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted");
+			return;
+		}
+		if (!tableExists(con, tableName)) {
+			System.out.println("Error: Table '" + tableName +"' does not exist. Please try again.");
+			return;
+		}
+		
+		System.out.println("Enter the column name: ");
+		String columnName = input.nextLine().trim();
+		
+		if(columnName.isEmpty()) {
+			System.out.println("Unable to find this table. Operation aborted.");
+			return;
+		}
+		
+		System.out.println("Which column should we use to find the row? (condition column) ");
+		System.out.println("e.g id, name");
+		String conditionColumn = input.nextLine().trim();
+		
+		if(conditionColumn.isEmpty()) {
+			System.out.println("Condition column cannot be empty.");
+			return;
+		}
+		
+		if(!columnExists(con, tableName, conditionColumn)) {
+			System.out.println("Column '" + conditionColumn + "' does not exist in table '" + tableName +"'.");
+		}
+		
+		System.out.println("Enter the existing value of that column to find the row (condition value)");
+		System.out.println("e.g '3' for id, 'bob' for name");
+		String conditionValue = input.nextLine().trim();
+		
+		if(conditionValue.isEmpty()) {
+			System.out.println("Condition value cannot be empty");
+			return;
+		}
+		
+		String sql = "DELETE FROM "+ tableName + " WHERE " + conditionColumn + "=?";
+	
+		try(PreparedStatement statement = con.prepareStatement(sql)){
+			statement.setString(1, conditionValue);
+			int rowsDeleted = statement.executeUpdate();
+		
+			if(rowsDeleted > 0) {
+				System.out.println("Row deleted successfully.");
+			}
+			else {
+				System.out.println("No matching rows found. Nothing deleted.");
+			}
+		}
+		
+		
+		catch(SQLException e) {
+			System.out.println("SQL Error: "+ e.getMessage());
+		}
+	
+	
+	}
+
 	public void editTableData(Connection con) {
 		System.out.println("Enter the table name: ");
 		String tableName = input.nextLine().trim();
@@ -174,7 +243,7 @@ public class Application {
 	    }
 	}
 
-	public String getColumnDataType(Connection con, String tableNameFind,String columnFromTable ) {
+	public static String getColumnDataType(Connection con, String tableNameFind,String columnFromTable ) {
 		String dataType = null;
 		
 		try {
