@@ -80,8 +80,9 @@ public class Application {
 							con.close();
 							System.out.println("Database connection closed.");
 							
-						}catch(SQLException e){
-							
+						}
+						catch(SQLException e){
+							System.out.println("Error closing connection: "+e.getMessage());
 						}
 						keepRunning = false;
 					}
