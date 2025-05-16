@@ -66,53 +66,33 @@ public class Application {
 			int choice = input.nextInt();
 			input.nextLine();//consume leftover newline
 			switch(choice) {
-				case 1:{
-					createNewTable(con);
-					break;
-				}
-				case 2:{
-					deleteTable(con);
-					break;
-				}
-				case 3:{
-					addTableColumn(con);
-					break;
-				}
-				case 4:{
-					deleteTableColumn(con);
-					break;
-				}
-				case 5:{
-					editTableColumn(con);
-					break;
-				}
-				case 6:{
-					insertTableData(con);
-					break;
-				}
-				case 7:{
-					editTableData(con);
-					break;
-				}
-				case 8:{
-					deleteTableData(con);
-					break;
-				}
-				case 9:{
+				case 1 -> createNewTable(con);
+				case 2 -> deleteTable(con);
+				case 3 -> addTableColumn(con);
+				case 4 -> deleteTableColumn(con);
+				case 5 -> editTableColumn(con);
+				case 6 -> insertTableData(con);
+				case 7 -> editTableData(con);
+				case 8 -> deleteTableData(con);
+				case 9 -> {
 					if(closeConnection()) {
-					//returns true
-					keepRunning = false;
+						try {
+							con.close();
+							System.out.println("Database connection closed.");
+							
+						}catch(SQLException e){
+							
+						}
+						keepRunning = false;
 					}
-					break;
 				}
 		
-				default:{
-					System.out.println("Invalid choice. Please enter a valid number.");
-					break;
-				}
+				default -> System.out.println("Invalid choice. Please enter a valid number.");
 			}
+			
 		}
 	}
+	
 	
 	private void deleteTableData(Connection con) {
 		System.out.println("Enter the table name: ");
