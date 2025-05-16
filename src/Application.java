@@ -31,21 +31,42 @@ public class Application {
 
 	}
 	
-	public boolean closeConnection() {
+	public boolean closeConnection(Connection con) {
 		System.out.println("Would you like to close the connection? (YES/NO)");
-		switch(input.nextLine().toLowerCase()) {
-			case"yes":{
-				System.out.println("Connection closed");
+		String response = input.nextLine().trim().toLowerCase();
+		
+		switch(response) {
+			case "yes":{
+				try {
+					if(con != null && !con.isClosed()) {
+						con.close();
+						System.out.println("Connection closed.");
+					}
+				}
+				catch(SQLException e) {
+					System.out.println("failed to close connection: "+e.getMessage());
+				}
 				return true;
 			}
-			case"no":{
+			case "no":{
+				System.out.println("Keeping the connection open.");
 				return false;
 			}
-			default:{
+			default:
 				System.out.println("Invalid choice. Closing connection by default...");
+				try {
+					if(con != null && !con.isClosed()) {
+						con.close();
+						System.out.println("Connection closed.");
+					}
+				}
+				catch(SQLException e) {
+					System.out.println("Failed to close connection: "+e.getMessage());
+				}
 				return true;
-			}
+		
 		}
+		
 	}
 	public void mainMenu(Connection con) {
 		boolean keepRunning = true;//control variable
@@ -75,7 +96,7 @@ public class Application {
 				case 7 -> editTableData(con);
 				case 8 -> deleteTableData(con);
 				case 9 -> {
-					if(closeConnection()) {
+					if(closeConnection(con)) {
 						try {
 							con.close();
 							System.out.println("Database connection closed.");
